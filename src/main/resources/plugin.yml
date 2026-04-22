@@ -1,0 +1,6 @@
+name: PlazaApartments
+version: '1.0'
+main: com.choespacedout.PlazaApartments.Core
+api-version: '1.21'
+authors: [ ChloeSpacedOut ]
+description: Test Plugin
