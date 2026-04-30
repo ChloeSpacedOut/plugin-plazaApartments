@@ -1,10 +1,8 @@
 package com.choespacedout.PlazaApartments;
 
-import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.util.BoundingBox;
 
@@ -47,12 +45,12 @@ public class ApartmentSetupCache {
         return boundingBox;
     }
 
-    private HashMap<String, ApartmentSetup> cacheFromFile(File apartmentsFile, FileConfiguration config) {
+    private HashMap<String, ApartmentSetup> cacheFromFile(File apartmentsFile, Config config) {
         HashMap<String, ApartmentSetup> newApartmentSetupCache = new HashMap<>();
         YamlConfiguration apartmentSetupConfig = YamlConfiguration.loadConfiguration(apartmentsFile);
 
-        World apartmentWorld = Bukkit.getWorld(Objects.requireNonNull(config.getString("apartmentWorld")));
-        World mainWorld = Bukkit.getWorld(Objects.requireNonNull(config.getString("mainWorld")));
+        World apartmentWorld = config.getApartmentWorld();
+        World mainWorld = config.getMainWorld();
 
         List<String> apartments = apartmentSetupConfig.getKeys(false).stream().toList();
 
@@ -80,7 +78,7 @@ public class ApartmentSetupCache {
         return newApartmentSetupCache;
     }
 
-    ApartmentSetupCache(File apartmentsFile, FileConfiguration config) {
+    ApartmentSetupCache(File apartmentsFile, Config config) {
         apartmentSetupCache = cacheFromFile(apartmentsFile,config);
     }
 
