@@ -67,7 +67,7 @@ public class FileUtil {
         return apartmentSetupFile;
     }
 
-    public File createPlayerDataFile(UUID playerID) {
+    public File getPlayerDataFile(UUID playerID) {
         File playerDataFolder = new File(pluginFolder,"playerData");
         playerDataFolder.mkdir();
 
