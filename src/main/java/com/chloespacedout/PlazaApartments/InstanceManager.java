@@ -1,4 +1,4 @@
-package com.choespacedout.PlazaApartments;
+package com.chloespacedout.PlazaApartments;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -195,7 +195,7 @@ public class InstanceManager {
         apartmentInstances.remove(instanceID);
         instanceIDLookup.remove(apartmentOwner);
 
-        List<UUID> containedPlayers = playerApartment.getContainedPlayers();
+        HashSet<UUID> containedPlayers = playerApartment.getContainedPlayers();
 
         for (UUID playerID : containedPlayers) {
             Player player = Bukkit.getPlayer(playerID);
@@ -220,7 +220,7 @@ public class InstanceManager {
     }
 
     public void updateInstance(PlayerApartment playerApartment) {
-        List<UUID> containedPlayers = playerApartment.getContainedPlayers();
+        HashSet<UUID> containedPlayers = playerApartment.getContainedPlayers();
         if (containedPlayers.isEmpty()) {
             closeInstance(playerApartment);
         }

@@ -1,18 +1,17 @@
-package com.choespacedout.PlazaApartments;
+package com.chloespacedout.PlazaApartments;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 import java.util.UUID;
 
 public class PlayerApartment {
     private final int instanceID;
     private final UUID owner;
     private final ApartmentSetup apartmentType;
-    private List<UUID> containedPlayers = new ArrayList<>();
-    private List<UUID> containedEntities = new ArrayList<>();
+    private HashSet<UUID> containedPlayers = new HashSet<>();
+    private HashSet<UUID> containedEntities = new HashSet<>();
 
     public PlayerApartment(int newInstanceID, UUID newOwner, ApartmentSetup newApartmentType) {
         instanceID = newInstanceID;
@@ -51,7 +50,7 @@ public class PlayerApartment {
         target.teleport(newApartmentInstanceLocation);
     }
 
-    public List<UUID> getContainedPlayers() {
+    public HashSet<UUID> getContainedPlayers() {
         return containedPlayers;
     }
 
@@ -63,7 +62,7 @@ public class PlayerApartment {
         containedPlayers.remove(playerID);
     }
 
-    public List<UUID> getContainedEntities() {
+    public HashSet<UUID> getContainedEntities() {
         return containedEntities;
     }
 

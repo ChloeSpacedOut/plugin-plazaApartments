@@ -1,6 +1,7 @@
 name: PlazaApartments
 version: '1.0'
-main: com.choespacedout.PlazaApartments.Core
+main: com.chloespacedout.PlazaApartments.Core
 api-version: '1.21'
 authors: [ ChloeSpacedOut ]
-description: Test Plugin
+description: Isolated apartments for the Figura plaza
+depend: [WorldGuard]

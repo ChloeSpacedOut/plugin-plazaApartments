@@ -1,7 +1,7 @@
-package com.choespacedout.PlazaApartments.commands;
+package com.chloespacedout.PlazaApartments.commands;
 
-import com.choespacedout.PlazaApartments.ApartmentSetupCache;
-import com.choespacedout.PlazaApartments.InstanceManager;
+import com.chloespacedout.PlazaApartments.ApartmentSetupCache;
+import com.chloespacedout.PlazaApartments.InstanceManager;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;
 import io.papermc.paper.command.brigadier.Commands;

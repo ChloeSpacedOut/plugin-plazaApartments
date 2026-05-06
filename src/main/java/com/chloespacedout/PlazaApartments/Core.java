@@ -1,7 +1,8 @@
-package com.choespacedout.PlazaApartments;
+package com.chloespacedout.PlazaApartments;
 
-import com.choespacedout.PlazaApartments.commands.Apartment;
+import com.chloespacedout.PlazaApartments.commands.Apartment;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.TextComponent;
@@ -64,6 +65,14 @@ public final class Core extends JavaPlugin implements Listener {
 
         apartmentSetupCache = new ApartmentSetupCache(apartmentSetupFile,storedConfig);
 
+
+        WorldGuardManager worldGuardManager = new WorldGuardManager(storedConfig,apartmentSetupCache);
+        try {
+            worldGuardManager.regionSetup();
+        } catch (ProtectedRegion.CircularInheritanceException e) {
+            throw new RuntimeException(e);
+        }
+
         apartmentsFolder = fileUtil.createApartmentFiles(apartmentSetupCache);
         if (apartmentsFolder == null) {
             System.out.println("Could not save default apartment structure! PlazaApartments could not finish loading!");
@@ -123,6 +132,7 @@ public final class Core extends JavaPlugin implements Listener {
                 playerApartment.getContainedPlayers().stream()
                         .map(Bukkit::getPlayer)
                         .forEach(player -> player.sendActionBar(actionBarText));
+                return;
             }
             entity.addScoreboardTag("apartmentEntity+owner=" + playerApartment.getOwner());
             playerApartment.addToContainedEntities(entity.getUniqueId());

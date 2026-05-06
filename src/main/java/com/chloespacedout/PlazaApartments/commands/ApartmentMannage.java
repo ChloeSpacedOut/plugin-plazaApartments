@@ -1,4 +1,4 @@
-package com.choespacedout.PlazaApartments.commands;
+package com.chloespacedout.PlazaApartments.commands;
 
 import com.mojang.brigadier.tree.LiteralCommandNode;
 import io.papermc.paper.command.brigadier.CommandSourceStack;

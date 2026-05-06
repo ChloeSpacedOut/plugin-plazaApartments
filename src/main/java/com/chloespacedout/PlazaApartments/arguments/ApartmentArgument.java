@@ -1,6 +1,6 @@
-package com.choespacedout.PlazaApartments.arguments;
+package com.chloespacedout.PlazaApartments.arguments;
 
-import com.choespacedout.PlazaApartments.ApartmentSetupCache;
+import com.chloespacedout.PlazaApartments.ApartmentSetupCache;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;

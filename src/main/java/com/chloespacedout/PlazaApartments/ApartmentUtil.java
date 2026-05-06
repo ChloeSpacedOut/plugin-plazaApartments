@@ -1,4 +1,4 @@
-package com.choespacedout.PlazaApartments;
+package com.chloespacedout.PlazaApartments;
 
 import org.bukkit.Location;
 

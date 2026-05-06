@@ -1,10 +1,10 @@
-package com.choespacedout.PlazaApartments.commands;
+package com.chloespacedout.PlazaApartments.commands;
 
-import com.choespacedout.PlazaApartments.ApartmentSetup;
-import com.choespacedout.PlazaApartments.ApartmentSetupCache;
-import com.choespacedout.PlazaApartments.InstanceManager;
-import com.choespacedout.PlazaApartments.PlayerApartment;
-import com.choespacedout.PlazaApartments.arguments.ApartmentArgument;
+import com.chloespacedout.PlazaApartments.ApartmentSetup;
+import com.chloespacedout.PlazaApartments.ApartmentSetupCache;
+import com.chloespacedout.PlazaApartments.InstanceManager;
+import com.chloespacedout.PlazaApartments.PlayerApartment;
+import com.chloespacedout.PlazaApartments.arguments.ApartmentArgument;
 import com.mojang.brigadier.Command;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.tree.LiteralCommandNode;
