@@ -1,24 +1,23 @@
 package com.chloespacedout.PlazaApartments;
 
 import org.bukkit.Location;
-import org.bukkit.util.BoundingBox;
+
+import java.util.List;
 
 public class ApartmentSetup {
     private final String name;
     private final Location enterTeleport;
     private final Location exitTeleport;
-    private final Location regionMin;
-    private final Location regionMax;
-    private final BoundingBox region;
+    private final Region region;
+    private final List<Region> noBuildRegions;
 
 
-    public ApartmentSetup(String newName, Location newEnterTeleport, Location newExitTeleport, Location newRegionMin, Location newRegionMax, BoundingBox newRegion) {
+    public ApartmentSetup(String newName, Location newEnterTeleport, Location newExitTeleport, Region newRegion, List<Region> newNoBuildRegions) {
         name = newName;
         enterTeleport = newEnterTeleport;
         exitTeleport = newExitTeleport;
-        regionMin = newRegionMin;
-        regionMax = newRegionMax;
         region = newRegion;
+        noBuildRegions = newNoBuildRegions;
     }
 
     public String getName() {
@@ -33,16 +32,12 @@ public class ApartmentSetup {
         return exitTeleport;
     }
 
-    public BoundingBox getRegion() {
+    public Region getRegion() {
         return region;
     }
 
-    public Location getRegionMin() {
-        return regionMin;
-    }
-
-    public Location getRegionMax() {
-        return regionMax;
+    public List<Region> getNoBuildRegions() {
+        return noBuildRegions;
     }
 
 }

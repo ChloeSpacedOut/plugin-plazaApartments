@@ -11,9 +11,9 @@ public class ApartmentMannage {
                         .then(Commands.literal("on"))
                         .then(Commands.literal("off"))
                 )
-                .then(Commands.literal("kick")
-                        .then(Commands.literal("PLAYER")))
-                .then(Commands.literal("kickAll"))
+                .then(Commands.literal("closeInstance")
+                        .then(Commands.literal("INSTANCE")))
+                .then(Commands.literal("closeAllInstances"))
                 .build();
     }
 }

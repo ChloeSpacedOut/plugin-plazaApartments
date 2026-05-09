@@ -34,13 +34,10 @@ public class Apartment {
                                             playerApartment = instanceManager.getApartment(commandSenderID);
                                             playerApartment.teleport(commandSender);
                                         } else {
-                                            // feedback here for if you succeed or fail
+                                            commandSender.sendRichMessage("<red>Something went wrong when loading your apartment!");
                                         }
                                     }
 
-                                    // create player apartment object
-                                    // add to next available slot in instance
-                                    // from slot data paste apartment & teleport player
                                     return Command.SINGLE_SUCCESS;
                                 }))
                         .then(Commands.literal("close")
@@ -54,24 +51,19 @@ public class Apartment {
                                     if (playerApartment != null) {
                                         instanceManager.closeInstance(playerApartment);
                                     } else {
-
+                                        commandSender.sendRichMessage("<red>Something went wrong when closing your apartment!");
                                     }
-
 
                                     return Command.SINGLE_SUCCESS;
                                 }))
-                        .then(Commands.literal("delete")) // confirm deletion
-                        .then(Commands.literal("manage")
+                        .then(Commands.literal("reset")) // confirm reset
+                        .then(Commands.literal("changeLock"))
+                        .then(Commands.literal("mintKey")
+                                .executes(ctx -> {
 
-                                .then(Commands.literal("trust")
-                                        .then(Commands.literal("add"))
-                                        .then(Commands.literal("remove"))
-                                )
-                                .then(Commands.literal("block")
-                                        .then(Commands.literal("add"))
-                                        .then(Commands.literal("remove"))
-                                )
-                        )
+                                    return Command.SINGLE_SUCCESS;
+                                }))
+                        .then(Commands.literal("mintBuilderKey"))
                 )
                 .build();
     }

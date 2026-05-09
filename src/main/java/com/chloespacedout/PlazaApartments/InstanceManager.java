@@ -27,13 +27,15 @@ public class InstanceManager {
     private final ApartmentUtil apartmentUtil;
     private final FileUtil fileUtil;
     private final ApartmentSetupCache apartmentSetupCache;
+    private final WorldGuardManager worldGuardManager;
 
-    public InstanceManager(Config newConfig, File newApartmentFolder, FileUtil newFileUtil, ApartmentSetupCache newApartmentSetupCache) {
+    public InstanceManager(Config newConfig, File newApartmentFolder, FileUtil newFileUtil, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
         config = newConfig;
         apartmentFolder = newApartmentFolder;
         apartmentUtil = new ApartmentUtil(config,this);
         fileUtil = newFileUtil;
         apartmentSetupCache = newApartmentSetupCache;
+        worldGuardManager = newWorldGuardManager;
 
         for (int i = 0; i < config.getInstanceCount(); i++) {
             availableIDs.push(i);
@@ -65,12 +67,17 @@ public class InstanceManager {
 
 
     private void loadApartment(Structure apartmentStructure, ApartmentSetup apartmentSetup, Integer instanceID) {
-        Location apartmentLoadLocation = apartmentSetup.getRegionMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
+        Location apartmentLoadLocation = apartmentSetup.getRegion().getMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
         apartmentStructure.place(apartmentLoadLocation,true, StructureRotation.NONE, Mirror.NONE,0,1.0F, new Random());
     }
 
     public void validateLoadedEntities(UUID ignoredEntity) {
         List<Entity> entities = config.getApartmentWorld().getEntities();
+
+        for (int i = 0; i < apartmentInstances.size(); i++) {
+            PlayerApartment playerApartment = (PlayerApartment) apartmentInstances.values().toArray()[i];
+            playerApartment.resetEntityCount();
+        }
 
         for (Entity entity : entities) {
             Location location = entity.getLocation();
@@ -116,6 +123,12 @@ public class InstanceManager {
                 boolean isApartmentEntity = scoreboardTags.contains("apartmentEntity+owner=" + playerApartment.getOwner());
                 if (!isApartmentEntity) {
                     entity.remove();
+                    continue;
+                }
+                int entityCount = playerApartment.countEntity();
+                if (entityCount > config.getMaxEntitiesPerInstance()) {
+                    entity.remove();
+                    playerApartment.warnPlayers("Entity limit of reached unexpectedly! Purged entities!");
                 }
             }
 
@@ -131,6 +144,8 @@ public class InstanceManager {
         String apartmentType = apartmentSetup.getName();
         int instanceID = availableIDs.pop();
         PlayerApartment playerApartment = new PlayerApartment(instanceID,apartmentOwner,apartmentSetup);
+
+        worldGuardManager.updateBuilders(playerApartment);
 
         File defaultApartment = new File(apartmentFolder,apartmentType + "/defaultApartment.nbt");
         File userApartmentFile = new File(apartmentFolder, apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
@@ -165,8 +180,10 @@ public class InstanceManager {
         UUID apartmentOwner = playerApartment.getOwner();
         ApartmentSetup apartmentSetup = playerApartment.getApartmentSetup();
         String apartmentType = apartmentSetup.getName();
-        Location regionMin = apartmentSetup.getRegionMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
-        Location regionMax = apartmentSetup.getRegionMax().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
+
+        Region region = apartmentSetup.getRegion();
+        Location regionMin = region.getMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
+        Location regionMax = region.getMax().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
 
         File userApartmentFile = new File(apartmentFolder,apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
         StructureManager structureManager = Bukkit.getStructureManager();

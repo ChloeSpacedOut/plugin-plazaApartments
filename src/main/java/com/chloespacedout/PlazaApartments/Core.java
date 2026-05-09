@@ -4,9 +4,6 @@ import com.chloespacedout.PlazaApartments.commands.Apartment;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.papermc.paper.plugin.lifecycle.event.types.LifecycleEvents;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.TextComponent;
-import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -79,7 +76,7 @@ public final class Core extends JavaPlugin implements Listener {
             return;
         }
 
-        instanceManager = new InstanceManager(storedConfig,apartmentsFolder,fileUtil,apartmentSetupCache);
+        instanceManager = new InstanceManager(storedConfig,apartmentsFolder,fileUtil,apartmentSetupCache,worldGuardManager);
 
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
             commands.registrar().register(Apartment.createCommand("apartment",apartmentSetupCache,instanceManager),"Apartment related commands");
@@ -125,13 +122,9 @@ public final class Core extends JavaPlugin implements Listener {
             final int entitiesInInstance = playerApartment.getContainedEntities().size();
             final int entityLimit = storedConfig.getMaxEntitiesPerInstance();
 
-            final TextComponent actionBarText = Component.text("Entity limit of " + entityLimit + " reached!").color(NamedTextColor.RED);
-
             if (entitiesInInstance >= entityLimit) {
                 e.setCancelled(true);
-                playerApartment.getContainedPlayers().stream()
-                        .map(Bukkit::getPlayer)
-                        .forEach(player -> player.sendActionBar(actionBarText));
+                playerApartment.warnPlayers("Entity limit of " + entityLimit + " reached!");
                 return;
             }
             entity.addScoreboardTag("apartmentEntity+owner=" + playerApartment.getOwner());

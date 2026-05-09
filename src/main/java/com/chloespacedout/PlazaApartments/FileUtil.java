@@ -30,8 +30,10 @@ public class FileUtil {
 
         for (int i = 0; i < apartmentSetups.size(); i++) {
             ApartmentSetup apartmentSetup = (ApartmentSetup) apartmentSetups.values().toArray()[i];
-            Location regionMin = apartmentSetup.getRegionMin();
-            Location regionMax = apartmentSetup.getRegionMax();
+
+            Region region = apartmentSetup.getRegion();
+            Location regionMin = region.getMin();
+            Location regionMax = region.getMax();
 
             String apartmentName = apartmentSetup.getName();
 
