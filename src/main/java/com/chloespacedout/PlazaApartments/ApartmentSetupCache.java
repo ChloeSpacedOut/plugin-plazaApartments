@@ -55,7 +55,7 @@ public class ApartmentSetupCache {
             Location enterTeleport = locationFromConfig(apartmentSection,apartmentWorld,"enterTeleport.position");
             enterTeleport = applyRotationFromConfig(apartmentSection,"enterTeleport.rotation",enterTeleport);
 
-            Location exitTeleport = locationFromConfig(apartmentSection,apartmentWorld,"exitTeleport.position");
+            Location exitTeleport = locationFromConfig(apartmentSection,mainWorld,"exitTeleport.position");
             exitTeleport = applyRotationFromConfig(apartmentSection,"exitTeleport.rotation",exitTeleport);
 
             Location regionMin = locationFromConfig(apartmentSection,apartmentWorld,"region.min");
@@ -77,7 +77,9 @@ public class ApartmentSetupCache {
 
             }
 
-            ApartmentSetup apartmentSetup = new ApartmentSetup(apartmentName,enterTeleport,exitTeleport,region,noBuildRegions);
+            Location keyBlock = locationFromConfig(apartmentSection,mainWorld,"keyBlock");
+
+            ApartmentSetup apartmentSetup = new ApartmentSetup(apartmentName,enterTeleport,exitTeleport,region,noBuildRegions,keyBlock);
             newApartmentSetupCache.put(apartmentName,apartmentSetup);
 
         }

@@ -13,25 +13,28 @@ import org.bukkit.event.player.PlayerTeleportEvent;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.UUID;
 
 public class PlayerHandler implements Listener {
 
     private final Config config;
     private final InstanceManager instanceManager;
-    private final FileUtil fileUtil;
+    private final FileManager fileManager;
     private final ApartmentSetupCache apartmentSetupCache;
+    private final WorldGuardManager worldGuardManager;
 
-    public PlayerHandler(Core pluginInstance, Config newConfig, InstanceManager newInstanceManager, FileUtil newFileUtil, ApartmentSetupCache newApartmentSetupCache) {
+    public PlayerHandler(Core pluginInstance, Config newConfig, InstanceManager newInstanceManager, FileManager newFileManager, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
         config = newConfig;
         instanceManager = newInstanceManager;
-        fileUtil = newFileUtil;
+        fileManager = newFileManager;
         apartmentSetupCache = newApartmentSetupCache;
+        worldGuardManager = newWorldGuardManager;
         Bukkit.getPluginManager().registerEvents(this,pluginInstance);
     }
 
     @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent e) {
+    public void onPlayerJoin(PlayerJoinEvent e) throws IOException {
         Player joinPlayer = e.getPlayer();
         if (!joinPlayer.getWorld().equals(config.getApartmentWorld())) return;
 
@@ -39,10 +42,11 @@ public class PlayerHandler implements Listener {
 
         instanceManager.validateLoadedEntities(joinPlayerID);
 
-        File playerDataFile = fileUtil.getPlayerDataFile(joinPlayerID);
+        File playerDataFile = fileManager.getPlayerDataFile(joinPlayerID);
         YamlConfiguration playerData = YamlConfiguration.loadConfiguration(playerDataFile);
         String lastEnteredApartmentOwner = playerData.getString("lastApartmentEntered.owner");
         String lastEnteredApartmentType = playerData.getString("lastApartmentEntered.type");
+        String lastEnteredApartmentPerms = playerData.getString("lastApartmentEntered.perms");
 
         if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null) {
             final Location mainWorldSpawn = config.getMainWorld().getSpawnLocation();
@@ -58,13 +62,20 @@ public class PlayerHandler implements Listener {
         PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
 
         if (playerApartment == null) {
-            // include checks for if you're in an apartment you're a keyholder for
             ApartmentSetup apartmentSetup = apartmentSetupCache.getApartmentSetup(lastEnteredApartmentType);
             Location abortLocation = apartmentSetup.getExitTeleport();
-            if (lastEnteredApartmentOwnerID.equals(joinPlayerID)) {
-                boolean hasPreparedInstance = instanceManager.prepareInstance(joinPlayerID,apartmentSetup);
+
+            boolean hasEnterPerms = Objects.equals(lastEnteredApartmentPerms, "enter");
+            boolean hasBuildPerms = Objects.equals(lastEnteredApartmentPerms, "build");
+
+            if (lastEnteredApartmentOwnerID.equals(joinPlayerID) || hasEnterPerms || hasBuildPerms) {
+                boolean hasPreparedInstance = instanceManager.prepareInstance(lastEnteredApartmentOwnerID,apartmentSetup);
                 if (hasPreparedInstance) {
                     playerApartment = instanceManager.getApartment(joinPlayerID);
+                    if (hasBuildPerms) {
+                        playerApartment.addToBuilders(joinPlayerID);
+                        worldGuardManager.updateBuilders(playerApartment);
+                    }
                     playerApartment.relativeTeleport(joinPlayer);
                 } else {
                     joinPlayer.teleport(abortLocation);
@@ -73,8 +84,8 @@ public class PlayerHandler implements Listener {
             } else {
                 joinPlayer.teleport(abortLocation);
                 joinPlayer.sendRichMessage("<red>The apartment you were inside is now closed!");
-                playerData.set("lastApartmentEntered.owner",null);
-                playerData.set("lastApartmentEntered.type",null);
+                playerData.set("lastApartmentEntered",null);
+                playerData.save(playerDataFile);
             }
 
             return;
@@ -92,12 +103,12 @@ public class PlayerHandler implements Listener {
 
         UUID quitPlayerID = quitPlayer.getUniqueId();
 
-        File playerDataFile = fileUtil.getPlayerDataFile(quitPlayerID);
+        File playerDataFile = fileManager.getPlayerDataFile(quitPlayerID);
         YamlConfiguration playerData = YamlConfiguration.loadConfiguration(playerDataFile);
         String lastEnteredApartmentOwner = playerData.getString("lastApartmentEntered.owner");
         String lastEnteredApartmentType = playerData.getString("lastApartmentEntered.type");
 
-        if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null) return;
+        if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null ) return;
 
         UUID lastEnteredApartmentOwnerID = UUID.fromString(lastEnteredApartmentOwner);
         PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
@@ -120,14 +131,14 @@ public class PlayerHandler implements Listener {
         Player teleportPlayer = e.getPlayer();
         UUID teleportPlayerID = teleportPlayer.getUniqueId();
 
-        File playerDataFile = fileUtil.getPlayerDataFile(teleportPlayer.getUniqueId());
+        File playerDataFile = fileManager.getPlayerDataFile(teleportPlayer.getUniqueId());
         YamlConfiguration playerData = YamlConfiguration.loadConfiguration(playerDataFile);
         String lastEnteredApartmentOwner = playerData.getString("lastApartmentEntered.owner");
         String lastEnteredApartmentType = playerData.getString("lastApartmentEntered.type");
+        String lastEnteredApartmentPerms = playerData.getString("lastApartmentEntered.perms");
 
         if (!teleportWorld.equals(config.getApartmentWorld())) {
-            playerData.set("lastApartmentEntered.owner",null);
-            playerData.set("lastApartmentEntered.type",null);
+            playerData.set("lastApartmentEntered",null);
             playerData.save(playerDataFile);
 
             if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null) return;
@@ -169,6 +180,13 @@ public class PlayerHandler implements Listener {
         }
 
         playerApartment.addToContainedPlayers(teleportPlayerID);
+
+        boolean hasBuildPerms = Objects.equals(lastEnteredApartmentPerms, "build");
+
+        if (hasBuildPerms) {
+            playerApartment.addToBuilders(teleportPlayerID);
+            worldGuardManager.updateBuilders(playerApartment);
+        }
 
         playerData.set("lastApartmentEntered.owner",playerApartment.getOwner().toString());
         playerData.set("lastApartmentEntered.type",playerApartment.getApartmentSetup().getName());

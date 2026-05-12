@@ -10,14 +10,16 @@ public class ApartmentSetup {
     private final Location exitTeleport;
     private final Region region;
     private final List<Region> noBuildRegions;
+    private final Location keyBlock;
 
 
-    public ApartmentSetup(String newName, Location newEnterTeleport, Location newExitTeleport, Region newRegion, List<Region> newNoBuildRegions) {
+    public ApartmentSetup(String newName, Location newEnterTeleport, Location newExitTeleport, Region newRegion, List<Region> newNoBuildRegions, Location newKeyBlock) {
         name = newName;
         enterTeleport = newEnterTeleport;
         exitTeleport = newExitTeleport;
         region = newRegion;
         noBuildRegions = newNoBuildRegions;
+        keyBlock = newKeyBlock;
     }
 
     public String getName() {
@@ -40,4 +42,7 @@ public class ApartmentSetup {
         return noBuildRegions;
     }
 
+    public Location getKeyBlock() {
+        return keyBlock;
+    }
 }

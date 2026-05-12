@@ -25,15 +25,15 @@ public class InstanceManager {
     private final Config config;
     private final File apartmentFolder;
     private final ApartmentUtil apartmentUtil;
-    private final FileUtil fileUtil;
+    private final FileManager fileManager;
     private final ApartmentSetupCache apartmentSetupCache;
     private final WorldGuardManager worldGuardManager;
 
-    public InstanceManager(Config newConfig, File newApartmentFolder, FileUtil newFileUtil, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
+    public InstanceManager(Config newConfig, File newApartmentFolder, FileManager newFileManager, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
         config = newConfig;
         apartmentFolder = newApartmentFolder;
         apartmentUtil = new ApartmentUtil(config,this);
-        fileUtil = newFileUtil;
+        fileManager = newFileManager;
         apartmentSetupCache = newApartmentSetupCache;
         worldGuardManager = newWorldGuardManager;
 
@@ -87,7 +87,7 @@ public class InstanceManager {
                 Player player = (Player) entity;
                 if (player.hasPermission("apartments.mannage")) continue;
                 if ((ignoredEntity != null) && player.getUniqueId().equals(ignoredEntity)) continue;
-                File playerDataFile = fileUtil.getPlayerDataFile(player.getUniqueId());
+                File playerDataFile = fileManager.getPlayerDataFile(player.getUniqueId());
                 YamlConfiguration playerData = YamlConfiguration.loadConfiguration(playerDataFile);
                 String lastEnteredApartmentOwner = playerData.getString("lastApartmentEntered.owner");
                 String lastEnteredApartmentType = playerData.getString("lastApartmentEntered.type");
