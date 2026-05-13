@@ -9,6 +9,7 @@ import org.bukkit.structure.StructureManager;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -134,5 +135,15 @@ public class FileManager {
 
     public File getApartmentKeysFile() {
         return apartmentKeysFile;
+    }
+
+    public void deleteApartmentFile(String apartmentOwner, String apartmentType) {
+
+        File userApartmentFile = new File(apartmentsFolder,apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
+        try {
+            Files.delete(userApartmentFile.toPath());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

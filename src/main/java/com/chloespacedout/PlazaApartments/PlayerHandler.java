@@ -59,7 +59,7 @@ public class PlayerHandler implements Listener {
         }
 
         UUID lastEnteredApartmentOwnerID = UUID.fromString(lastEnteredApartmentOwner);
-        PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
+        PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID,lastEnteredApartmentType);
 
         if (playerApartment == null) {
             ApartmentSetup apartmentSetup = apartmentSetupCache.getApartmentSetup(lastEnteredApartmentType);
@@ -71,7 +71,7 @@ public class PlayerHandler implements Listener {
             if (lastEnteredApartmentOwnerID.equals(joinPlayerID) || hasEnterPerms || hasBuildPerms) {
                 boolean hasPreparedInstance = instanceManager.prepareInstance(lastEnteredApartmentOwnerID,apartmentSetup);
                 if (hasPreparedInstance) {
-                    playerApartment = instanceManager.getApartment(joinPlayerID);
+                    playerApartment = instanceManager.getApartment(joinPlayerID,apartmentSetup.getName());
                     if (hasBuildPerms) {
                         playerApartment.addToBuilders(joinPlayerID);
                         worldGuardManager.updateBuilders(playerApartment);
@@ -111,7 +111,7 @@ public class PlayerHandler implements Listener {
         if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null ) return;
 
         UUID lastEnteredApartmentOwnerID = UUID.fromString(lastEnteredApartmentOwner);
-        PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
+        PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID,lastEnteredApartmentType);
 
         if (playerApartment == null) return;
         if (!playerApartment.getApartmentSetup().getName().equals(lastEnteredApartmentType)) return;
@@ -143,7 +143,7 @@ public class PlayerHandler implements Listener {
 
             if (lastEnteredApartmentOwner == null || lastEnteredApartmentType == null) return;
             UUID lastEnteredApartmentOwnerID = UUID.fromString(lastEnteredApartmentOwner);
-            PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
+            PlayerApartment playerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID,lastEnteredApartmentType);
             if (playerApartment == null) return;
             if (!playerApartment.getApartmentSetup().getName().equals(lastEnteredApartmentType)) return;
             playerApartment.removeFromContainedPlayers(teleportPlayer.getUniqueId());
@@ -170,7 +170,7 @@ public class PlayerHandler implements Listener {
 
             if (hasApartmentOwnerChanged || hasApartmentTypeChanged) {
                 UUID lastEnteredApartmentOwnerID = UUID.fromString(lastEnteredApartmentOwner);
-                PlayerApartment lastPlayerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID);
+                PlayerApartment lastPlayerApartment = instanceManager.getApartment(lastEnteredApartmentOwnerID,lastEnteredApartmentType);
                 if (lastPlayerApartment != null) {
                     lastPlayerApartment.removeFromContainedPlayers(teleportPlayerID);
                     instanceManager.updateInstance(lastPlayerApartment);

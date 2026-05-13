@@ -10,28 +10,27 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.structure.Structure;
 import org.bukkit.structure.StructureManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
 
 public class InstanceManager {
-    private static final Logger log = LoggerFactory.getLogger(InstanceManager.class);
     private HashMap<Integer,PlayerApartment> apartmentInstances = new HashMap<>();
     private Stack<Integer> availableIDs = new Stack<>();
-    private HashMap<UUID,Integer> instanceIDLookup = new HashMap<>();
+    private HashMap<String,Integer> instanceIDLookup = new HashMap<>();
     private final Config config;
-    private final File apartmentFolder;
+    private final File apartmentsFolder;
     private final ApartmentUtil apartmentUtil;
     private final FileManager fileManager;
     private final ApartmentSetupCache apartmentSetupCache;
     private final WorldGuardManager worldGuardManager;
 
-    public InstanceManager(Config newConfig, File newApartmentFolder, FileManager newFileManager, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
+    public InstanceManager(Config newConfig, File newApartmentsFolder, FileManager newFileManager, ApartmentSetupCache newApartmentSetupCache, WorldGuardManager newWorldGuardManager) {
         config = newConfig;
-        apartmentFolder = newApartmentFolder;
+        apartmentsFolder = newApartmentsFolder;
         apartmentUtil = new ApartmentUtil(config,this);
         fileManager = newFileManager;
         apartmentSetupCache = newApartmentSetupCache;
@@ -46,8 +45,8 @@ public class InstanceManager {
         return apartmentInstances;
     }
 
-    public PlayerApartment getApartment(UUID playerID) {
-        Integer instanceID = instanceIDLookup.get(playerID);
+    public PlayerApartment getApartment(UUID playerID, String apartmentName) {
+        Integer instanceID = instanceIDLookup.get(playerID.toString() + "+" + apartmentName);
         if (instanceID != null) {
             return apartmentInstances.get(instanceID);
         } else {
@@ -68,7 +67,7 @@ public class InstanceManager {
 
     private void loadApartment(Structure apartmentStructure, ApartmentSetup apartmentSetup, Integer instanceID) {
         Location apartmentLoadLocation = apartmentSetup.getRegion().getMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
-        apartmentStructure.place(apartmentLoadLocation,true, StructureRotation.NONE, Mirror.NONE,0,1.0F, new Random());
+        apartmentStructure.place(apartmentLoadLocation,false, StructureRotation.NONE, Mirror.NONE,0,1.0F, new Random()); // temp set to false
     }
 
     public void validateLoadedEntities(UUID ignoredEntity) {
@@ -96,7 +95,7 @@ public class InstanceManager {
 
                     if (playerApartment != null && playerApartment.getOwner().equals(UUID.fromString(lastEnteredApartmentOwner))) return;
 
-                    PlayerApartment lastApartment = getApartment(UUID.fromString(lastEnteredApartmentOwner));
+                    PlayerApartment lastApartment = getApartment(UUID.fromString(lastEnteredApartmentOwner),lastEnteredApartmentType);
                     if (lastApartment != null) {
                         lastApartment.teleport(player);
                         player.playSound(player.getLocation(),Sound.ENTITY_PLAYER_TELEPORT,1.0F,1.0F);
@@ -147,8 +146,8 @@ public class InstanceManager {
 
         worldGuardManager.updateBuilders(playerApartment);
 
-        File defaultApartment = new File(apartmentFolder,apartmentType + "/defaultApartment.nbt");
-        File userApartmentFile = new File(apartmentFolder, apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
+        File defaultApartment = new File(apartmentsFolder,apartmentType + "/defaultApartment.nbt");
+        File userApartmentFile = new File(apartmentsFolder, apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
         StructureManager structureManager = Bukkit.getStructureManager();
 
         Structure apartmentStructure;
@@ -168,7 +167,7 @@ public class InstanceManager {
         }
 
         apartmentInstances.put(instanceID,playerApartment);
-        instanceIDLookup.put(apartmentOwner,instanceID);
+        instanceIDLookup.put(apartmentOwner.toString() + "+" + apartmentType,instanceID);
 
         return true;
     }
@@ -185,14 +184,32 @@ public class InstanceManager {
         Location regionMin = region.getMin().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
         Location regionMax = region.getMax().clone().add(0.0F,0.0F,1024.0F + (instanceID * 1024.0F));
 
-        File userApartmentFile = new File(apartmentFolder,apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
+        File userApartmentFileTemp = new File(apartmentsFolder,apartmentType + "/userApartments/" + apartmentOwner + "_temp.nbt");
         StructureManager structureManager = Bukkit.getStructureManager();
 
         Structure apartmentStructure = structureManager.createStructure();
-        apartmentStructure.fill(regionMin,regionMax,true);
+        apartmentStructure.fill(regionMin,regionMax,false); // temp set to false
 
         try {
-            structureManager.saveStructure(userApartmentFile,apartmentStructure);
+            structureManager.saveStructure(userApartmentFileTemp,apartmentStructure);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        if (userApartmentFileTemp.length() > 1048576) {
+            try {
+                Files.delete(userApartmentFileTemp.toPath());
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            playerApartment.warnPlayers("File size above 1mb. Refused to save apartment!");
+            return;
+        }
+
+        File userApartmentFile = new File(apartmentsFolder,apartmentType + "/userApartments/" + apartmentOwner + ".nbt");
+        try {
+            Files.copy(userApartmentFileTemp.toPath(),userApartmentFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.delete(userApartmentFileTemp.toPath());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -210,7 +227,7 @@ public class InstanceManager {
 
         availableIDs.push(instanceID);
         apartmentInstances.remove(instanceID);
-        instanceIDLookup.remove(apartmentOwner);
+        instanceIDLookup.remove(apartmentOwner.toString() + "+" + apartmentType);
 
         HashSet<UUID> containedPlayers = playerApartment.getContainedPlayers();
 
@@ -223,7 +240,7 @@ public class InstanceManager {
             }
         }
 
-        File defaultApartment = new File(apartmentFolder,apartmentType + "/defaultApartment.nbt");
+        File defaultApartment = new File(apartmentsFolder,apartmentType + "/defaultApartment.nbt");
 
         StructureManager structureManager = Bukkit.getStructureManager();
 

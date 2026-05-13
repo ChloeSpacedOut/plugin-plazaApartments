@@ -1,6 +1,7 @@
 package com.chloespacedout.PlazaApartments;
 
 import com.chloespacedout.PlazaApartments.commands.Apartment;
+import com.chloespacedout.PlazaApartments.commands.ApartmentLeave;
 import com.destroystokyo.paper.event.server.ServerTickStartEvent;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
 import io.papermc.paper.persistence.PersistentDataContainerView;
@@ -28,6 +29,7 @@ public final class Core extends JavaPlugin implements Listener {
     WeatherController weatherController;
     ApartmentSetupCache apartmentSetupCache;
     FileManager fileManager;
+    Config config;
 
 
     @Override
@@ -41,7 +43,7 @@ public final class Core extends JavaPlugin implements Listener {
         int maxEntitiesPerInstance = configFile.getInt("maxEntitiesPerInstance");
         World apartmentWorld = Bukkit.getWorld(Objects.requireNonNull(configFile.getString("apartmentWorld")));
         World mainWorld = Bukkit.getWorld(Objects.requireNonNull(configFile.getString("mainWorld")));
-        Config config = new Config(instanceCount,maxEntitiesPerInstance,apartmentWorld,mainWorld);
+        config = new Config(instanceCount,maxEntitiesPerInstance,apartmentWorld,mainWorld);
 
         fileManager = new FileManager(this.getDataFolder(),config);
 
@@ -60,7 +62,8 @@ public final class Core extends JavaPlugin implements Listener {
         instanceManager = new InstanceManager(config,apartmentsFolder,fileManager,apartmentSetupCache,worldGuardManager);
 
         this.getLifecycleManager().registerEventHandler(LifecycleEvents.COMMANDS, commands -> {
-            commands.registrar().register(Apartment.createCommand("apartment",this,apartmentSetupCache,instanceManager,fileManager),"Apartment related commands");
+            commands.registrar().register(Apartment.createCommand("apartment",this,apartmentSetupCache,instanceManager,fileManager,config),"Apartment related commands");
+            commands.registrar().register(ApartmentLeave.createCommand("apartmentLeave",new ApartmentUtil(config,instanceManager)));
         });
 
         weatherController = new WeatherController(this, config,instanceManager);
@@ -99,15 +102,24 @@ public final class Core extends JavaPlugin implements Listener {
         Player player = e.getPlayer();
         ItemStack item = e.getItem();
 
+        if (player.getWorld().equals(config.getApartmentWorld())) {
+            if (item != null && item.getType() == Material.ENDER_EYE) { // temp fix for ender eyes
+                e.setCancelled(true);
+                player.sendRichMessage("<red>You may not use ender eyes");
+            }
+        }
+
         HashMap<String,ApartmentSetup> apartmentSetups = apartmentSetupCache.getAllApartmentSetups();
         NamespacedKey key = new NamespacedKey(this,"keyID");
 
         for (int i = 0; i < apartmentSetups.size(); i++) {
             ApartmentSetup apartmentSetup = (ApartmentSetup) apartmentSetups.values().toArray()[i];
             Location keyBlock = apartmentSetup.getKeyBlock();
-            if (e.getClickedBlock().getLocation().equals(keyBlock)) {
+            if (e.getClickedBlock() != null && e.getClickedBlock().getLocation().equals(keyBlock)) {
 
                 e.setCancelled(true);
+
+                if (!player.hasPermission("apartments.use")) continue;
 
                 if (item == null) continue;
                 if (item.getType() != Material.PLAYER_HEAD) continue;
@@ -124,6 +136,7 @@ public final class Core extends JavaPlugin implements Listener {
 
                 if (ownerIDString == null) {
                     player.sendRichMessage("<red>This key's locks have been changed!");
+                    player.playSound(player.getLocation(),Sound.BLOCK_CHEST_LOCKED,1.0F,1.0F);
                     continue;
                 }
 
@@ -141,23 +154,25 @@ public final class Core extends JavaPlugin implements Listener {
 
                 if (!apartmentSetup.getName().equals(apartment.getName())) {
                     player.sendRichMessage("<red>This key is not for this apartment!");
+                    player.playSound(player.getLocation(),Sound.BLOCK_CHEST_LOCKED,1.0F,1.0F);
                     continue;
                 }
 
                 if (keyHolder != null && !keyHolder.equals(player.getUniqueId())) {
                     String playerName = Bukkit.getOfflinePlayer(keyHolder).getName();
                     player.sendRichMessage("<red>This key belongs to " + playerName + "!");
+                    player.playSound(player.getLocation(),Sound.BLOCK_CHEST_LOCKED,1.0F,1.0F);
                     continue;
                 }
 
-                PlayerApartment playerApartment = instanceManager.getApartment(ownerID);
+                PlayerApartment playerApartment = instanceManager.getApartment(ownerID,apartmentSetup.getName());
 
                 if (playerApartment != null) {
                     playerApartment.teleport(player);
                 } else {
                     boolean hasPreparedInstance = instanceManager.prepareInstance(ownerID,apartment);
                     if (hasPreparedInstance) {
-                        playerApartment = instanceManager.getApartment(ownerID);
+                        playerApartment = instanceManager.getApartment(ownerID,apartmentSetup.getName());
                         playerApartment.teleport(player);
                     } else {
                         player.sendRichMessage("<red>Something went wrong when loading the apartment!");

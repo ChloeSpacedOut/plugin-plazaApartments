@@ -29,8 +29,9 @@ public class Apartment {
         apartmentKeys.set(keyID, null);
     }
 
-    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, Core pluginInstance, ApartmentSetupCache apartmentSetupCache, InstanceManager instanceManager, FileManager fileManager) {
+    public static LiteralCommandNode<CommandSourceStack> createCommand(final String commandName, Core pluginInstance, ApartmentSetupCache apartmentSetupCache, InstanceManager instanceManager, FileManager fileManager, Config config) {
         return Commands.literal(commandName)
+                .requires(sender -> sender.getExecutor() instanceof Player && sender.getSender().hasPermission("apartments.use"))
                 .then(Commands.argument("apartment",new ApartmentArgument(apartmentSetupCache))
                         .then(Commands.literal("close")
                                 .executes(ctx -> {
@@ -38,7 +39,7 @@ public class Apartment {
                                     final Player commandSender = (Player) ctx.getSource().getSender();
                                     final UUID commandSenderID = commandSender.getUniqueId();
 
-                                    PlayerApartment playerApartment = instanceManager.getApartment(commandSenderID);
+                                    PlayerApartment playerApartment = instanceManager.getApartment(commandSenderID,apartmentType);
 
                                     if (playerApartment != null) {
                                         instanceManager.closeInstance(playerApartment);
@@ -49,11 +50,34 @@ public class Apartment {
                                     return Command.SINGLE_SUCCESS;
                                 })
                         )
-                        .then(Commands.literal("reset")) // confirm reset
+                        .then(Commands.literal("reset")
+                                .executes(ctx -> {
+                                    final Player commandSender = (Player) ctx.getSource().getSender();
+                                    commandSender.sendRichMessage("<gray>Confirm resetting apartment to default by adding \"confirm\"");
+                                    return Command.SINGLE_SUCCESS;
+                                })
+                                .then(Commands.literal("confirm")
+                                        .executes(ctx -> {
+                                            final String apartmentType = StringArgumentType.getString(ctx,"apartment");
+                                            final Player commandSender = (Player) ctx.getSource().getSender();
+                                            final UUID commandSenderID = commandSender.getUniqueId();
+                                            PlayerApartment playerApartment = instanceManager.getApartment(commandSenderID,apartmentType);
+
+                                            if (playerApartment != null) {
+                                                instanceManager.closeInstance(playerApartment);
+                                            }
+
+                                            fileManager.deleteApartmentFile(commandSenderID.toString(),apartmentType);
+
+                                            commandSender.sendRichMessage("<red>Apartment reset to default");
+                                            return Command.SINGLE_SUCCESS;
+                                        })
+                                )
+                        )
                         .then(Commands.literal("changeLocks")
                                 .executes(ctx -> {
                                     final Player commandSender = (Player) ctx.getSource().getSender();
-                                    commandSender.sendRichMessage("<gray>Confirm changing locks by adding \"confirm\"");
+                                    commandSender.sendRichMessage("<gray>Confirm permanently changing locks by adding \"confirm\"");
                                     return Command.SINGLE_SUCCESS;
                                 })
                                 .then(Commands.literal("confirm")
@@ -91,6 +115,7 @@ public class Apartment {
                                 )
                         )
                         .then(Commands.literal("mintKey")
+                                .requires(sender -> sender.getExecutor() instanceof Player && !sender.getExecutor().getWorld().equals(config.getApartmentWorld()))
                                 .then(Commands.literal("public")
                                         .executes(ctx -> {
                                             final Player commandSender = (Player) ctx.getSource().getSender();

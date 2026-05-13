@@ -2,6 +2,7 @@ package com.chloespacedout.PlazaApartments;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.World;
 import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -21,7 +22,16 @@ public class EntityHandler implements Listener {
 
     @EventHandler
     public void onEntitySpawn(EntitySpawnEvent e) {
+
         Entity entity = e.getEntity();
+        World world = entity.getWorld();
+
+        if (!world.equals(config.getApartmentWorld())) return;
+
+        if (entity.getName().equals("Wither") || entity.getName().equals("Ender Dragon")) {
+            e.setCancelled(true); // temp fix for wither
+        }
+
         Location spawnLocation = e.getLocation();
         ApartmentUtil apartmentUtil = new ApartmentUtil(config,instanceManager);
         PlayerApartment playerApartment = apartmentUtil.apartmentFromLocation(spawnLocation);
@@ -42,6 +52,10 @@ public class EntityHandler implements Listener {
     @EventHandler
     public void onEntityRemove(EntityRemoveEvent e) {
         Entity entity = e.getEntity();
+
+        World world = entity.getWorld();
+        if (!world.equals(config.getApartmentWorld())) return;
+
         Location entityLocation = entity.getLocation();
         ApartmentUtil apartmentUtil = new ApartmentUtil(config,instanceManager);
         PlayerApartment playerApartment = apartmentUtil.apartmentFromLocation(entityLocation);

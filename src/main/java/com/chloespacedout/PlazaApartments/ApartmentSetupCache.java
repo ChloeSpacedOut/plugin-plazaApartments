@@ -63,6 +63,7 @@ public class ApartmentSetupCache {
             Region region = new Region("main",regionMin,regionMax);
 
             ConfigurationSection noBuildRegionsSection = apartmentSection.getConfigurationSection("noBuildRegions");
+            // this breaks like crazy if the value is every null. Add checks before you use any configuration sections
             List<String> noBuildRegionIDs = noBuildRegionsSection.getKeys(false).stream().toList();
 
             List<Region> noBuildRegions = new ArrayList<>();
